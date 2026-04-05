@@ -1,176 +1,233 @@
 module Syntax
 
-layout Layout = WhitespaceAndComment* !>> [\ \t\n\r];
-lexical WhitespaceAndComment = [\ \t\n\r];
-
-keyword Reserved
-  = "defmodule"
-  | "using"
-  | "defspace"
-  | "defoperator"
-  | "defvar"
-  | "defrule"
-  | "defexpression"
-  | "defer"
-  | "end"
-  | "forall"
-  | "exists"
-  | "in"
-  | "or"
-  | "and"
-  | "neg"
-  ;
-
-@category="identifier"
-lexical Nombre = ([a-z][a-z0-9\-]* !>> [a-z0-9\-]) \ Reserved;
-
-@category="number"
-lexical IntLiteral = [0-9]+;
-
-@category="number"
-lexical FloatLiteral = [0-9]+ '.' [0-9]+;
+layout Layout = [\ \t\r]*;
+lexical NL = "\n";
 
 start syntax Program
-  = program: Module
+  = Module
   ;
 
 syntax Module
-  = module: 'defmodule' Nombre Using* Component* 'end'
+  = 'defmodule' Nombre NL
+    UsingList
+    ComponentSection
+    'end'
   ;
 
+syntax UsingList
+  = (Using NL)*
+  ;
+
+syntax ComponentSection
+  = (Component (NL Component)*)?
+    NL?
+  ;
 syntax Using
-  = using: 'using' Nombre
+  = 'using' Nombre
   ;
 
+
+// componentes
 syntax Component
-  = space: Space
-  | operator: Operator
-  | variable: Variable
-  | rule: Rule
-  | expression: Expression
-  | equation: Equation
-  | relation: Relation
-  | attribute: Attribute
+  = SpaceComponent
+  | OperatorComponent
+  | VariableComponent
+  | RuleComponent
+  | ExpressionComponent
+  | EquationComponent
   ;
 
-syntax Space
-  = spaceDecl: 'defspace' Nombre ('<' Nombre)? 'end'
+
+// space
+syntax SpaceComponent
+  = 'defspace' Nombre Less Nombre 'end'
+  | 'defspace' Nombre 'end'
   ;
 
-syntax Operator
-  = operatorDecl: 'defoperator' Nombre ':' Type 'end'
+
+//operator
+syntax OperatorComponent
+  = 'defoperator' Nombre ':' Type Attribute? 'end'
   ;
 
 syntax Type
-  = typeDecl: Nombre ('->' Nombre)+
+  = Nombre (Arrow Type)?
   ;
 
-syntax Attribute
-  = attribute: '[' AttributeItem+ ']'
-  ;
 
-syntax AttributeItem
-  = attributeItem: Nombre (':' AttributeValue)?
-  ;
-
-syntax AttributeValue
-  = nombreVal: Nombre
-  | symbolVal: Symbol
-  | intVal: IntLiteral
-  | floatVal: FloatLiteral
-  ;
-
-syntax Variable
-  = variableDecl: 'defvar' VarDeclList 'end'
+//variables necesarias 
+syntax VariableComponent
+  = 'defvar' VarDeclList 'end'
   ;
 
 syntax VarDeclList
-  = varDeclList: VarDecl (',' VarDecl)*
+  = VarDecl (',' VarDecl)*
   ;
 
 syntax VarDecl
-  = varDecl: Nombre ':' Nombre
+  = Nombre ':' Nombre
   ;
 
-syntax Rule
-  = ruleDecl: 'defrule' Application '->' Application 'end'
+
+// reglas
+syntax RuleComponent
+  = 'defrule' Application Arrow Application 'end'
   ;
 
+
+// app
 syntax Application
-  = app: '(' Nombre Argument+ ')'
+  = '(' Nombre Argument+ ')'
   ;
 
 syntax Argument
-  = appArg: Application
-  | termArg: Term
+  = Application
+  | Nombre
+  | IntLiteral
+  | FloatLiteral
   ;
 
-syntax Term
-  = nombreTerm: Nombre
-  | symbolTerm: Symbol
-  | appTerm: Application
+
+// expresiones
+syntax ExpressionComponent
+  = 'defexpression' LogicalExpression Attribute? 'end'
   ;
 
-syntax Expression
-  = expressionDecl: 'defexpression' LogicalExpression Attribute? 'end'
+syntax EquationComponent
+  = 'defequation' LogicalExpression Equal LogicalExpression 'end'
   ;
 
+
+//attributes
+syntax Attribute
+  = '[' AttributeItem+ ']'
+  ;
+
+syntax AttributeItem
+  = Nombre (':' AttributeValue)?
+  ;
+
+syntax AttributeValue
+  = Nombre
+  | IntLiteral
+  | FloatLiteral
+  ;
+
+
+// logic
 syntax LogicalExpression
-  = quantifierExpr: Quantifier
-  | binaryExpr: BinaryExpression
-  ;
-
-syntax Equation
-  = equationDecl: LogicalExpression '=' LogicalExpression
+  = Quantifier
+  > EquivExpr
   ;
 
 syntax Quantifier
-  = quantifier: ('forall' | 'exists') Nombre ('in' Nombre)? '.' LogicalExpression
+  = ('forall' | 'exists') Nombre ('in' Nombre)? Dot LogicalExpression
   ;
 
-syntax BinaryExpression
-  = binary: UnaryExpression (('≡' | '=>' | 'or' | 'and') UnaryExpression)*
+syntax EquivExpr
+  = ImplExpr (Equiv ImplExpr)*
   ;
 
-syntax UnaryExpression
-  = negExpr: 'neg' UnaryExpression
-  | baseExpr: Base
+syntax ImplExpr
+  = OrExpr (Implies OrExpr)*
   ;
 
-syntax Base
-  = parenExpr: '(' BinaryExpression ')'
-  | relationExpr: Relation
-  | termExpr: Term
+syntax OrExpr
+  = AndExpr ('or' AndExpr)*
   ;
 
+syntax AndExpr
+  = UnaryExpr ('and' UnaryExpr)*
+  ;
+
+syntax UnaryExpr
+  = 'neg' UnaryExpr
+  | BaseExpr
+  ;
+
+syntax BaseExpr
+  = '(' LogicalExpression ')'
+  | Relation
+  | Term
+  ;
+
+
+//relaciones
 syntax Relation
-  = relopRelation: Term Relop Term
-  | namedRelation: Term Nombre Term
+  = Term RelOp Term
   ;
 
-syntax Relop
-  = inOp: 'in'
-  | ltOp: '<'
-  | gtOp: '>'
-  | lteOp: '<='
-  | gteOp: '>='
-  | eqOp: '='
-  | neqOp: '<>'
+syntax RelOp
+  = 'in'
+  | LessEq
+  | GreaterEq
+  | NotEqual
+  | Less
+  | Greater
+  | Equal
   ;
 
-syntax Symbol
-  = mulSym: '*'
-  | divSym: '/'
-  | subSym: '-'
-  | addSym: '+'
-  | powSym: '**'
-  | modSym: '%'
-  | ltSym: '<'
-  | gtSym: '>'
-  | lteSym: '<='
-  | gteSym: '>='
-  | neqSym: '<>'
-  | eqSym: '='
-  | implSym: '=>'
-  | equivSym: '≡'
+
+// term
+
+syntax Term
+  = Application
+  | Nombre
+  | IntLiteral
+  | FloatLiteral
+  ;
+
+
+// id
+syntax Nombre
+  = ID
+  ;
+
+lexical ID
+  = [a-zA-Z][a-zA-Z0-9\-]* !>> [a-zA-Z0-9\-]
+  \ Reserved
+  ;
+
+
+lexical IntLiteral
+  = [0-9]+ !>> [0-9]
+  ;
+
+lexical FloatLiteral
+  = [0-9]+ "." [0-9]+ !>> [0-9]
+  ;
+
+
+// tk
+// se pusieron en codigo para evitar problemas con el parser
+lexical Less = "\u003C" !>> "\u003D" !>> "\u003E";
+lexical Greater = "\u003E" !>> "\u003D";
+lexical LessEq = "\u003C\u003D";
+lexical GreaterEq = "\u003E\u003D";
+lexical NotEqual = "\u003C\u003E";
+lexical Equal = "\u003D" !>> "\u003E";
+lexical Implies  = "\u003D\u003E";
+lexical Arrow = "\u002D\u003E";
+lexical Dot = "." !>> [0-9];
+lexical Equiv  = "≡";
+
+
+// reservadas
+keyword Reserved
+  = 'defmodule'
+  | 'using'
+  | 'defspace'
+  | 'defoperator'
+  | 'defvar'
+  | 'defrule'
+  | 'defexpression'
+  | 'defequation'
+  | 'end'
+  | 'forall'
+  | 'exists'
+  | 'in'
+  | 'and'
+  | 'or'
+  | 'neg'
+  | 'defer'
   ;
