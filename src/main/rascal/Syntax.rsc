@@ -4,7 +4,7 @@ layout Layout = [\ \t\r]*;
 lexical NL = "\n";
 
 start syntax Program
-  = Module
+  = Module NL*
   ;
 
 syntax Module

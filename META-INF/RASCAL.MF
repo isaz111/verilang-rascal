@@ -1,4 +1,4 @@
 Manifest-Version: 0.0.1
-Project-Name: rascaldsl
+Project-Name: verilang-rascal
 Source: src/main/rascal
 
