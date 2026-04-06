@@ -7,7 +7,7 @@ import util::IDEServices;
 import util::LanguageServer;
 import Syntax;
 
-PathConfig pcfg = getProjectPathConfig(|project://verilang-rascal|);
+PathConfig pcfg = getProjectPathConfig(|project://rascaldsl|);
 
 set[LanguageService] contribs() = {
   parser(start[Program] (str program, loc src) {
