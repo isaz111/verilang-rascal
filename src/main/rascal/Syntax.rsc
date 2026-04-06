@@ -65,13 +65,13 @@ syntax VarDeclList
   ;
 
 syntax VarDecl
-  = Nombre ':' Nombre
+  = Nombre ':' Type
   ;
 
 
 // reglas
 syntax RuleComponent
-  = 'defrule' Application Arrow Application 'end'
+  = 'defrule' Term Arrow Term 'end'
   ;
 
 
@@ -100,7 +100,7 @@ syntax EquationComponent
 
 //attributes
 syntax Attribute
-  = '[' AttributeItem+ ']'
+  = '[' AttributeItem (',' AttributeItem)* ']'
   ;
 
 syntax AttributeItem
