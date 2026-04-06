@@ -132,6 +132,32 @@ RuleDecl toRule(Tree t) {
 }
 
 RelOp toRelOp(Tree t) {
+  str txt = yield(t);
+
+  if (txt == "in") {
+    return inOp();
+  }
+
+  if (txt == "\u003C\u003D") {
+    return lessEqOp();
+  }
+
+  if (txt == "\u003E\u003D") {
+    return greaterEqOp();
+  }
+
+  if (txt == "\u003C") {
+    return lessOp();
+  }
+
+  if (txt == "\u003E") {
+    return greaterOp();
+  }
+
+  if (txt == "\u003C\u003E") {
+    return notEqualOp();
+  }
+
   return equalOp();
 }
 
@@ -146,11 +172,11 @@ LogicExpr toRelation(Tree t) {
 
 LogicExpr toLogicExpr(Tree t) {
   if (isForall(t)) {
-    return forallExpr("x", noSpace(), termExpr(nameTerm("temp")));
+  return toForall(t);
   }
-
+  
   if (isExists(t)) {
-    return existsExpr("x", noSpace(), termExpr(nameTerm("temp")));
+  return toExists(t);
   }
   
   if (isNeg(t)) {
@@ -160,7 +186,7 @@ LogicExpr toLogicExpr(Tree t) {
   if (isAnd(t)) {
     return toAnd(t);
     }
-    
+
   if (isOr(t)) {
     return toOr(t);
     }
@@ -297,4 +323,28 @@ LogicExpr toOr(Tree t) {
   }
 
   throw "No se pudo convertir or";
+}
+
+LogicExpr toForall(Tree t) {
+  switch (t) {
+    case appl(_, [_, var, _, body]):
+      return forallExpr(yield(var), noSpace(), toLogicExpr(body));
+
+    case appl(_, [_, var, _, space, _, body]):
+      return forallExpr(yield(var), inSpace(yield(space)), toLogicExpr(body));
+  }
+
+  throw "No se pudo convertir forall";
+}
+
+LogicExpr toExists(Tree t) {
+  switch (t) {
+    case appl(_, [_, var, _, body]):
+      return existsExpr(yield(var), noSpace(), toLogicExpr(body));
+
+    case appl(_, [_, var, _, space, _, body]):
+      return existsExpr(yield(var), inSpace(yield(space)), toLogicExpr(body));
+  }
+
+  throw "No se pudo convertir exists";
 }
