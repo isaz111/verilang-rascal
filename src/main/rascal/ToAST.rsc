@@ -10,11 +10,11 @@ Program toProgram(Tree t) {
 }
 
 VModule toModule(Tree t) {
-  return vModule(yield(t), toUsingList(t), toComponents(t));
+  return vModule(unparse(t), toUsingList(t), toComponents(t));
 }
 
 bool isUsing(Tree t) {
-  return contains(yield(t), "using");
+  return contains(unparse(t), "using");
 }
 
 list[str] toUsingList(Tree t) {
@@ -23,7 +23,7 @@ list[str] toUsingList(Tree t) {
   visit(t) {
     case u: appl(_, _):
       if (isUsing(u)) {
-        result += [yield(u)];
+        result += [unparse(u)];
       }
   }
 
@@ -36,8 +36,8 @@ list[Component] toComponents(Tree t) {
   visit(t) {
     case c: appl(_, _):
       if (isSpace(c) || isRule(c) || isOperator(c) || isVariable(c)
-          || contains(yield(c), "defexpression")
-          || contains(yield(c), "defequation")) {
+          || contains(unparse(c), "defexpression")
+          || contains(unparse(c), "defequation")) {
         result += [toComponent(c)];
       }
   }
@@ -62,11 +62,11 @@ Component toComponent(Tree t) {
     return variableComp(toVarBlock(t));
   }
 
-  if (contains(yield(t), "defexpression")) {
+  if (contains(unparse(t), "defexpression")) {
     return exprComp(toExpr(t));
   }
 
-  if (contains(yield(t), "defequation")) {
+  if (contains(unparse(t), "defequation")) {
     return equationComp(toEquation(t));
   }
 
@@ -74,20 +74,20 @@ Component toComponent(Tree t) {
 }
 
 bool isSpace(Tree t) {
-  return contains(yield(t), "defspace");
+  return contains(unparse(t), "defspace");
 }
 
 bool isRule(Tree t) {
-  return contains(yield(t), "defrule");
+  return contains(unparse(t), "defrule");
 }
 
 SpaceDecl toSpace(Tree t) {
   switch (t) {
     case appl(_, [_, name, _]):
-      return simpleSpace(yield(name));
+      return simpleSpace(unparse(name));
 
     case appl(_, [_, name1, _, name2, _]):
-      return orderedSpace(yield(name1), yield(name2));
+      return orderedSpace(unparse(name1), unparse(name2));
   }
 
   throw "No se pudo convertir SpaceComponent";
@@ -96,16 +96,16 @@ SpaceDecl toSpace(Tree t) {
 Term toTerm(Tree t) {
   switch (t) {
     case appl(_, [name]):
-      return nameTerm(yield(name));
+      return nameTerm(unparse(name));
 
     case appl(_, [intLit]):
-      return intTerm(toInt(yield(intLit)));
+      return intTerm(toInt(unparse(intLit)));
 
     case appl(_, [floatLit]):
-      return realTerm(toReal(yield(floatLit)));
+      return realTerm(toReal(unparse(floatLit)));
 
     case appl(_, [_, name, args]):
-      return appTerm(yield(name), toArgs(args));
+      return appTerm(unparse(name), toArgs(args));
   }
 
   throw "No se pudo convertir Term";
@@ -132,7 +132,7 @@ RuleDecl toRule(Tree t) {
 }
 
 RelOp toRelOp(Tree t) {
-  str txt = yield(t);
+  str txt = unparse(t);
 
   if (txt == "in") {
     return inOp();
@@ -191,8 +191,8 @@ LogicExpr toLogicExpr(Tree t) {
     return toOr(t);
     }
 
-  if (contains(yield(t), "<") || contains(yield(t), ">") ||
-      contains(yield(t), "=") || contains(yield(t), "in")) {
+  if (contains(unparse(t), "<") || contains(unparse(t), ">") ||
+      contains(unparse(t), "=") || contains(unparse(t), "in")) {
     return toRelation(t);
   }
 
@@ -221,20 +221,20 @@ EquationDecl toEquation(Tree t) {
 }
 
 bool isOperator(Tree t) {
-  return contains(yield(t), "defoperator");
+  return contains(unparse(t), "defoperator");
 }
 
 bool isVariable(Tree t) {
-  return contains(yield(t), "defvar");
+  return contains(unparse(t), "defvar");
 }
 
 OperDef toOper(Tree t) {
   switch (t) {
     case appl(_, [_, name, _, typ, _, _]):
-      return operDef(yield(name), toType(typ), []);
+      return operDef(unparse(name), toType(typ), []);
 
     case appl(_, [_, name, _, typ, attrs, _]):
-      return operDef(yield(name), toType(typ), []);
+      return operDef(unparse(name), toType(typ), []);
   }
 
   throw "No se pudo convertir OperatorComponent";
@@ -247,10 +247,10 @@ VarBlock toVarBlock(Tree t) {
 VType toType(Tree t) {
   switch (t) {
     case appl(_, [name]):
-      return simpleType(yield(name));
+      return simpleType(unparse(name));
 
     case appl(_, [name, _, rest]):
-      return arrowType(simpleType(yield(name)), toType(rest));
+      return arrowType(simpleType(unparse(name)), toType(rest));
   }
 
   throw "No se pudo convertir Type";
@@ -261,7 +261,7 @@ list[VarDecl] toVarDecls(Tree t) {
 
   visit(t) {
     case d: appl(_, _):
-      if (contains(yield(d), ":")) {
+      if (contains(unparse(d), ":")) {
         result += [toVarDecl(d)];
       }
   }
@@ -272,30 +272,30 @@ list[VarDecl] toVarDecls(Tree t) {
 VarDecl toVarDecl(Tree t) {
   switch (t) {
     case appl(_, [name, _, typ]):
-      return varDecl(yield(name), toType(typ));
+      return varDecl(unparse(name), toType(typ));
   }
 
   throw "No se pudo convertir VarDecl";
 }
 
 bool isNeg(Tree t) {
-  return contains(yield(t), "neg");
+  return contains(unparse(t), "neg");
 }
 
 bool isAnd(Tree t) {
-  return contains(yield(t), " and ");
+  return contains(unparse(t), " and ");
 }
 
 bool isOr(Tree t) {
-  return contains(yield(t), " or ");
+  return contains(unparse(t), " or ");
 }
 
 bool isForall(Tree t) {
-  return contains(yield(t), "forall");
+  return contains(unparse(t), "forall");
 }
 
 bool isExists(Tree t) {
-  return contains(yield(t), "exists");
+  return contains(unparse(t), "exists");
 }
 
 LogicExpr toNeg(Tree t) {
@@ -328,10 +328,10 @@ LogicExpr toOr(Tree t) {
 LogicExpr toForall(Tree t) {
   switch (t) {
     case appl(_, [_, var, _, body]):
-      return forallExpr(yield(var), noSpace(), toLogicExpr(body));
+      return forallExpr(unparse(var), noSpace(), toLogicExpr(body));
 
     case appl(_, [_, var, _, space, _, body]):
-      return forallExpr(yield(var), inSpace(yield(space)), toLogicExpr(body));
+      return forallExpr(unparse(var), inSpace(unparse(space)), toLogicExpr(body));
   }
 
   throw "No se pudo convertir forall";
@@ -340,10 +340,10 @@ LogicExpr toForall(Tree t) {
 LogicExpr toExists(Tree t) {
   switch (t) {
     case appl(_, [_, var, _, body]):
-      return existsExpr(yield(var), noSpace(), toLogicExpr(body));
+      return existsExpr(unparse(var), noSpace(), toLogicExpr(body));
 
     case appl(_, [_, var, _, space, _, body]):
-      return existsExpr(yield(var), inSpace(yield(space)), toLogicExpr(body));
+      return existsExpr(unparse(var), inSpace(unparse(space)), toLogicExpr(body));
   }
 
   throw "No se pudo convertir exists";
