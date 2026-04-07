@@ -47,27 +47,28 @@ syntax SpaceComponent
 
 //operator
 syntax OperatorComponent
-  = 'defoperator' Nombre ':' Type Attribute? 'end'
+  = opNoAttr: 'defoperator' Nombre ':' Type 'end'
+  | opAttr: 'defoperator' Nombre ':' Type Attribute 'end'
   ;
 
 syntax Type
-  = Nombre (Arrow Type)?
+  = simpleType: Nombre
+  | arrowType: Nombre Arrow Type
   ;
 
-
-//variables necesarias 
+//variables  
 syntax VariableComponent
-  = 'defvar' VarDeclList 'end'
+  = varComp: 'defvar' VarDeclList 'end'
   ;
 
 syntax VarDeclList
-  = VarDecl (',' VarDecl)*
+  = oneVarDecl: VarDecl
+  | manyVarDecls: VarDecl ',' VarDeclList
   ;
 
 syntax VarDecl
-  = Nombre ':' Type
+  = varDecl: Nombre ':' Type
   ;
-
 
 // reglas
 syntax RuleComponent
@@ -90,7 +91,8 @@ syntax Argument
 
 // expresiones
 syntax ExpressionComponent
-  = 'defexpression' LogicalExpression Attribute? 'end'
+  = exprNoAttr: 'defexpression' LogicalExpression 'end'
+  | exprAttr: 'defexpression' LogicalExpression Attribute 'end'
   ;
 
 syntax EquationComponent
@@ -104,77 +106,93 @@ syntax Attribute
   ;
 
 syntax AttributeItem
-  = Nombre (':' AttributeValue)?
+  = attrPlain: Nombre
+  | attrKeyVal: Nombre ':' AttributeValue
   ;
+
 
 syntax AttributeValue
-  = Nombre
-  | IntLiteral
-  | FloatLiteral
+  = attrName: Nombre
+  | attrInt: IntLiteral
+  | attrFloat: FloatLiteral
+  | attrEmpty: EmptySet
   ;
-
 
 // logic
 syntax LogicalExpression
-  = Quantifier
-  > EquivExpr
+  = logicalQuant: Quantifier
+  | logicalEquiv: EquivExpr
   ;
 
 syntax Quantifier
-  = ('forall' | 'exists') Nombre ('in' Nombre)? Dot LogicalExpression
+  = forallExpr: 'forall' Nombre ('in' Nombre)? Dot LogicalExpression
+  | existsExpr: 'exists' Nombre ('in' Nombre)? Dot LogicalExpression
   ;
 
 syntax EquivExpr
-  = ImplExpr (Equiv ImplExpr)*
+  = equivSingle: ImplExpr
+  | equivChain: ImplExpr Equiv EquivExpr
   ;
 
 syntax ImplExpr
-  = OrExpr (Implies OrExpr)*
+  = implSingle: OrExpr
+  | implChain: OrExpr Implies ImplExpr
   ;
 
 syntax OrExpr
-  = AndExpr ('or' AndExpr)*
+  = orSingle: AndExpr
+  | orChain: AndExpr 'or' OrExpr
   ;
 
 syntax AndExpr
-  = UnaryExpr ('and' UnaryExpr)*
+  = andSingle: UnaryExpr
+  | andChain: UnaryExpr 'and' AndExpr
   ;
 
 syntax UnaryExpr
-  = 'neg' UnaryExpr
-  | BaseExpr
+  = negExpr: 'neg' UnaryExpr
+  | unaryBase: BaseExpr
   ;
 
 syntax BaseExpr
-  = '(' LogicalExpression ')'
-  | Relation
-  | Term
+  = baseParen: '(' LogicalExpression ')'
+  | baseRelation: Relation
+  | baseBoolAtom: BoolAtom
+  ;
+
+syntax BoolAtom
+  = boolName: Nombre
   ;
 
 
-//relaciones
 syntax Relation
-  = Term RelOp Term
+  = relIn: Term 'in' Term
+  | relLessEq: Term LessEq Term
+  | relGreaterEq: Term GreaterEq Term
+  | relNotEqual: Term NotEqual Term
+  | relLess: Term Less Term
+  | relGreater: Term Greater Term
+  | relEqual: Term Equal Term
   ;
 
-syntax RelOp
-  = 'in'
-  | LessEq
-  | GreaterEq
-  | NotEqual
-  | Less
-  | Greater
-  | Equal
-  ;
+//syntax RelOp
+//  = 'in'
+//  | LessEq
+//  | GreaterEq
+//  | NotEqual
+//  | Less
+//  | Greater
+//  | Equal
+//  ;
 
 
 // term
 
 syntax Term
-  = Application
-  | Nombre
-  | IntLiteral
-  | FloatLiteral
+  = termApp: Application
+  | termName: Nombre
+  | termInt: IntLiteral
+  | termFloat: FloatLiteral
   ;
 
 
@@ -211,6 +229,7 @@ lexical Arrow = "\u002D\u003E";
 lexical Dot = "." !>> [0-9];
 lexical Equiv  = "≡";
 
+lexical EmptySet = "∅";
 
 // reservadas
 keyword Reserved

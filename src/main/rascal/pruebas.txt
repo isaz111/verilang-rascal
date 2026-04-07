@@ -1,0 +1,80 @@
+A continuación, están las pruebas de verilang que funcionan con esta gramática, siguiendo todas las reglas:
+
+defmodule A
+end
+
+defmodule A
+defspace Set end
+defspace Nat < Number end
+end
+
+
+defmodule A
+defvar x: Int, y: Bool end
+end
+
+defmodule A
+defrule (f x) -> (g y) end
+end
+
+defmodule A
+defexpression forall x in Int . x = x end
+end
+
+
+defmodule A
+defoperator f : A -> B -> C end
+end
+
+
+defmodule A
+defvar p: Bool end
+end
+
+
+defmodule A
+defvar p: Bool, q: Bool end
+end
+
+
+defmodule A
+defvar p: A -> B end
+end
+
+
+defmodule A
+defexpression p and q end
+end
+
+
+
+Prueba completa
+defmodule Set
+using List
+defspace Set < SuperSet end
+defoperator union : Set -> Set -> Set [associative, id:empty] end
+defoperator isIn : Element -> Set -> Bool end
+defoperator implication : Bool -> Bool -> Bool end
+defoperator negation : Bool -> Bool end
+defvar p: Bool, q: Bool end
+defrule (implication p q) -> (disjunction (negation p) q) end
+defexpression forall x in Element . (x in S or x in U) end
+defequation p = q end
+end
+
+
+prueba del pdf
+defmodule A
+defoperator union : Set -> Set -> Set [associative, id :∅ ] end
+end
+
+defmodule Set
+using List
+defspace Set < SuperSet end
+defoperator union : Set -> Set -> Set [associative, id:∅] end
+defoperator isIn : Element -> Set -> Bool end
+defoperator implication : Bool -> Bool -> Bool end
+defoperator negation : Bool -> Bool end
+defvar p: Bool, q: Bool end
+defrule (implication p q) -> (disjunction (negation p) q) end
+end
