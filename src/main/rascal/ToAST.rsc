@@ -235,6 +235,9 @@ OperDef toOper(Tree t) {
 
     case appl(_, [_, name, _, typ, _]):
       return operDef(unparse(name), toType(typ));
+
+    default:
+      throw "No se pudo convertir OperatorComponent";
   }
 }
 
