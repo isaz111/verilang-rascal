@@ -36,6 +36,8 @@ data Term
   | nameTerm(str identifier)
   | intTerm(int intValue)
   | realTerm(real realValue)
+  | stringTerm(str stringValue)
+  | charTerm(str charValue)
   ;
 
 data LogicExpr

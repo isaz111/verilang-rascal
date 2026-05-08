@@ -98,6 +98,13 @@ str generateTerm(Term t) {
       return "<i>";
     case realTerm(r):
       return "<r>";
+    
+    case stringTerm(s):
+      return s;
+
+    case charTerm(c):
+      return c;
+      
     case appTerm(name, args): {
       list[str] generatedArgs = [generateTerm(a) | a <- args];
       str argsStr = intercalate(", ", generatedArgs);

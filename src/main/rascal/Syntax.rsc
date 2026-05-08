@@ -196,6 +196,8 @@ syntax Term
   | termName: Nombre
   | termInt: IntLiteral
   | termFloat: FloatLiteral
+  | termString: StringLiteral
+  | termChar: CharLiteral
   ;
 
 
@@ -216,6 +218,14 @@ lexical IntLiteral
 
 lexical FloatLiteral
   = [0-9]+ "." [0-9]+ !>> [0-9]
+  ;
+
+lexical StringLiteral
+  = "\"" ![\"]* "\""
+  ;
+
+lexical CharLiteral
+  = "\'" ![\'] "\'"
   ;
 
 
