@@ -3,6 +3,7 @@ module Generator
 import AST;
 import IO;
 import String;
+import List;
 
 void runProgram(Program p) {
   println(generateProgram(p));
@@ -93,18 +94,17 @@ str generateTerm(Term t) {
   switch(t) {
     case nameTerm(n):
       return n;
-
     case intTerm(i):
       return "<i>";
-
     case realTerm(r):
       return "<r>";
-
     case appTerm(name, args): {
-    list[str] generatedArgs = [generateTerm(a) | a <- args];
-    return "<name>(<strJoin(generatedArgs, ", ")>)";
-}
+      list[str] generatedArgs = [generateTerm(a) | a <- args];
+      str argsStr = intercalate(", ", generatedArgs);
+      return "<name>(<argsStr>)";
+    }
   }
+  return "?";
 }
 
 str generateLogicExpr(LogicExpr e) {
@@ -116,10 +116,11 @@ str generateLogicExpr(LogicExpr e) {
       return "<generateTerm(left)> <generateRelOp(op)> <generateTerm(right)>";
 
     case andExpr(exprs):
-      return strJoin([generateLogicExpr(x) | x <- exprs], " and ");
+      return intercalate(" and ", [generateLogicExpr(x) | x <- exprs]);
 
     case orExpr(exprs):
-      return strJoin([generateLogicExpr(x) | x <- exprs], " or ");
+      return intercalate(" or ", [generateLogicExpr(x) | x <- exprs]);
+
 
     case negExpr(inner):
       return "neg <generateLogicExpr(inner)>";
@@ -133,12 +134,14 @@ str generateLogicExpr(LogicExpr e) {
     case groupedExpr(inner):
       return "(<generateLogicExpr(inner)>)";
 
+    
     case impliesExpr(exprs):
-      return strJoin([generateLogicExpr(x) | x <- exprs], " =\> ");
+      return intercalate(" =\> ", [generateLogicExpr(x) | x <- exprs]);
 
     case equivExpr(exprs):
-      return strJoin([generateLogicExpr(x) | x <- exprs], " ≡ ");
-  }
+      return intercalate(" ≡ ", [generateLogicExpr(x) | x <- exprs]);
+}
+  return "?";
 }
 
 str generateMaybeSpace(MaybeSpace s) {
