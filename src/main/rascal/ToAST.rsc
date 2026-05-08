@@ -209,42 +209,43 @@ RelOp toRelOp(Tree t) {
 
 LogicExpr toRelation(Tree t) {
   switch (t) {
-    case appl(_, [left, op, right]):
-      return relationExpr(toTerm(left), toRelOp(op), toTerm(right));
+    case appl(prod(label("relEqual", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), equalOp(), toTerm(kids[4]));
+    case appl(prod(label("relLessEq", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), lessEqOp(), toTerm(kids[4]));
+    case appl(prod(label("relGreaterEq", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), greaterEqOp(), toTerm(kids[4]));
+    case appl(prod(label("relNotEqual", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), notEqualOp(), toTerm(kids[4]));
+    case appl(prod(label("relLess", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), lessOp(), toTerm(kids[4]));
+    case appl(prod(label("relGreater", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), greaterOp(), toTerm(kids[4]));
+    case appl(prod(label("relIn", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), inOp(), toTerm(kids[4]));
   }
-
-  throw "No se pudo convertir Relation";
+  throw "No se pudo convertir Relation: <unparse(t)>";
 }
 
 LogicExpr toLogicExpr(Tree t) {
-  if (isForall(t)) {
-  return toForall(t);
-  }
-  
-  if (isExists(t)) {
-  return toExists(t);
-  }
-  
-  if (isNeg(t)) {
-    return toNeg(t);
-  }
-  
-  if (isAnd(t)) {
-    return toAnd(t);
-    }
+  if (appl(prod(label("forallExpr", _), _, _), _) := t) return toForall(t);
+  if (appl(prod(label("existsExpr", _), _, _), _) := t) return toExists(t);
+  if (appl(prod(label("negExpr", _), _, _), _) := t) return toNeg(t);
+  if (appl(prod(label("andChain", _), _, _), _) := t) return toAnd(t);
+  if (appl(prod(label("orChain", _), _, _), _) := t) return toOr(t);
+  if (appl(prod(label(/^rel/, _), _, _), _) := t) return toRelation(t);
 
-  if (isOr(t)) {
-    return toOr(t);
-    }
-
-  if (contains(unparse(t), "<") || contains(unparse(t), ">") ||
-      contains(unparse(t), "=") || contains(unparse(t), "in")) {
-    return toRelation(t);
+  LogicExpr found = termExpr(nameTerm("?"));
+  visit(t) {
+    case r: appl(prod(label(/^rel/, _), _, _), _):
+      found = toRelation(r);
+    case andNode: appl(prod(label("andChain", _), _, _), _):
+      found = toAnd(andNode);
+    case orNode: appl(prod(label("orChain", _), _, _), _):
+      found = toOr(orNode);
   }
-
-  return termExpr(toTerm(t));
+  return found;
 }
-
 ExprDecl toExpr(Tree t) {
   switch (t) {
     case appl(_, [_, expr, _, _]):
@@ -323,49 +324,47 @@ VarDecl toVarDecl(Tree t) {
 }
 
 bool isNeg(Tree t) {
-  return contains(unparse(t), "neg");
+  return appl(prod(label("negExpr", _), _, _), _) := t;
 }
 
 bool isAnd(Tree t) {
-  return contains(unparse(t), " and ");
+  return appl(prod(label("andChain", _), _, _), _) := t;
 }
 
 bool isOr(Tree t) {
-  return contains(unparse(t), " or ");
+  return appl(prod(label("orChain", _), _, _), _) := t;
 }
 
 bool isForall(Tree t) {
-  return contains(unparse(t), "forall");
+  return appl(prod(label("forallExpr", _), _, _), _) := t;
 }
 
 bool isExists(Tree t) {
-  return contains(unparse(t), "exists");
+  return appl(prod(label("existsExpr", _), _, _), _) := t;
 }
 
 LogicExpr toNeg(Tree t) {
   switch (t) {
-    case appl(_, [_, expr]):
-      return negExpr(toLogicExpr(expr));
+    case appl(prod(label("negExpr", _), _, _), kids):
+      return negExpr(toLogicExpr(kids[2]));
   }
-
   throw "No se pudo convertir neg";
 }
 
 LogicExpr toAnd(Tree t) {
   switch (t) {
-    case appl(_, [left, _, right]):
-      return andExpr([toLogicExpr(left), toLogicExpr(right)]);
+    case appl(prod(label("andChain", _), _, _), kids):
+      return andExpr([toLogicExpr(kids[0]), toLogicExpr(kids[4])]);
   }
-
   throw "No se pudo convertir and";
 }
 
+
 LogicExpr toOr(Tree t) {
   switch (t) {
-    case appl(_, [left, _, right]):
-      return orExpr([toLogicExpr(left), toLogicExpr(right)]);
+    case appl(prod(label("orChain", _), _, _), kids):
+      return orExpr([toLogicExpr(kids[0]), toLogicExpr(kids[4])]);
   }
-
   throw "No se pudo convertir or";
 }
 
