@@ -34,12 +34,22 @@ list[Component] toComponents(Tree t) {
   list[Component] result = [];
 
   visit(t) {
-    case c: appl(_, _):
-      if (isSpace(c) || isRule(c) || isOperator(c) || isVariable(c)
-          || contains(unparse(c), "defexpression")
-          || contains(unparse(c), "defequation")) {
-        result += [toComponent(c)];
-      }
+    case appl(prod(label("opDef", _), _, _), kids):
+      result += [operComp(operDef(trim(unparse(kids[2])), toType(kids[6]), []))];
+    case appl(prod(label("spaceSimple", _), _, _), kids):
+      result += [spaceComp(simpleSpace(trim(unparse(kids[2]))))];
+    case appl(prod(label("spaceOrdered", _), _, _), kids):
+      result += [spaceComp(orderedSpace(trim(unparse(kids[2])), trim(unparse(kids[4]))))];
+    case appl(prod(label("ruleDef", _), _, _), kids):
+      result += [ruleComp(ruleDecl(toTerm(kids[2]), toTerm(kids[4])))];
+    case appl(prod(label("varComp", _), _, _), kids):
+      result += [variableComp(varBlock(toVarDecls(kids[2])))];
+    case appl(prod(label("exprNoAttr", _), _, _), kids):
+      result += [exprComp(exprDecl(toLogicExpr(kids[2]), []))];
+    case appl(prod(label("exprAttr", _), _, _), kids):
+      result += [exprComp(exprDecl(toLogicExpr(kids[2]), []))];
+    case appl(prod(label("equationDef", _), _, _), kids):
+      result += [equationComp(equationDecl(toLogicExpr(kids[2]), toLogicExpr(kids[4])))];
   }
 
   return result;
@@ -229,12 +239,14 @@ bool isVariable(Tree t) {
 }
 
 OperDef toOper(Tree t) {
-  switch (t) {
-    case appl(_, [_, name, _, typ, _, _]):
-      return operDef(unparse(name), toType(typ), []);
-
-    case appl(_, [_, name, _, typ, attrs, _]):
-      return operDef(unparse(name), toType(typ), []);
+  str raw = unparse(t);
+  str sinDef = trim(replaceAll(raw, "defoperator", ""));
+  str sinEnd = trim(replaceAll(sinDef, "end", ""));
+  list[str] partes = split(":", sinEnd);
+  if (size(partes) >= 2) {
+    str nombre = trim(partes[0]);
+    str tipo = trim(partes[1]);
+    return operDef(nombre, simpleType(tipo), []);
   }
 
   throw "No se pudo convertir OperatorComponent";
@@ -246,13 +258,11 @@ VarBlock toVarBlock(Tree t) {
 
 VType toType(Tree t) {
   switch (t) {
-    case appl(_, [name]):
-      return simpleType(unparse(name));
-
-    case appl(_, [name, _, rest]):
-      return arrowType(simpleType(unparse(name)), toType(rest));
+    case appl(prod(label("arrowType", _), _, _), kids):
+      return arrowType(simpleType(trim(unparse(kids[0]))), toType(kids[4]));
+    case appl(prod(label("simpleType", _), _, _), kids):
+      return simpleType(trim(unparse(kids[0])));
   }
-
   throw "No se pudo convertir Type";
 }
 
