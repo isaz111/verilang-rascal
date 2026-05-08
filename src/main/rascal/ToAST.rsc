@@ -57,7 +57,7 @@ list[Component] toComponents(Tree t) {
     case appl(prod(label("spaceOrdered", _), _, _), kids):
       result += [spaceComp(orderedSpace(trim(unparse(kids[2])), trim(unparse(kids[4]))))];
     case appl(prod(label("ruleDef", _), _, _), kids):
-      result += [ruleComp(ruleDecl(toTerm(kids[2]), toTerm(kids[4])))];
+      result += [ruleComp(toRule(appl(prod(label("ruleDef", sort("RuleComponent")), [], {}), kids)))];
     case appl(prod(label("varComp", _), _, _), kids):
       result += [variableComp(varBlock(toVarDecls(kids[2])))];
     case appl(prod(label("exprNoAttr", _), _, _), kids):
@@ -119,27 +119,31 @@ SpaceDecl toSpace(Tree t) {
 
 Term toTerm(Tree t) {
   switch (t) {
-    case appl(_, [name]):
-      return nameTerm(unparse(name));
+    case appl(prod(label("termApp", _), _, _), kids):
+      return toTerm(kids[0]);
 
-    case appl(_, [intLit]):
-      return intTerm(toInt(unparse(intLit)));
+    case appl(prod(label("termName", _), _, _), kids):
+      return nameTerm(trim(unparse(kids[0])));
 
-    case appl(_, [floatLit]):
-      return realTerm(toReal(unparse(floatLit)));
+    case appl(prod(label("termInt", _), _, _), kids):
+      return intTerm(toInt(trim(unparse(kids[0]))));
 
-    case appl(_, [_, name, args]):
-      return appTerm(unparse(name), toArgs(args));
+    case appl(prod(label("termFloat", _), _, _), kids):
+      return realTerm(toReal(trim(unparse(kids[0]))));
+
+    case appl(prod(sort("Application"), _, _), kids):
+      return appTerm(trim(unparse(kids[2])), toArgs(t));
   }
 
-  throw "No se pudo convertir Term";
+  throw "No se pudo convertir Term: <unparse(t)>";
 }
+
 
 list[Term] toArgs(Tree t) {
   list[Term] result = [];
 
   visit(t) {
-    case a: appl(_, _):
+    case a: appl(prod(sort("Argument"), _, _), _):
       result += [toTerm(a)];
   }
 
@@ -148,8 +152,8 @@ list[Term] toArgs(Tree t) {
 
 RuleDecl toRule(Tree t) {
   switch (t) {
-    case appl(_, [_, left, _, right, _]):
-      return ruleDecl(toTerm(left), toTerm(right));
+    case appl(prod(label("ruleDef", _), _, _), kids):
+      return ruleDecl(toTerm(kids[2]), toTerm(kids[6]));
   }
 
   throw "No se pudo convertir RuleComponent";
@@ -284,10 +288,8 @@ list[VarDecl] toVarDecls(Tree t) {
   list[VarDecl] result = [];
 
   visit(t) {
-    case d: appl(_, _):
-      if (contains(unparse(d), ":")) {
-        result += [toVarDecl(d)];
-      }
+    case d: appl(prod(label("varDecl", _), _, _), _):
+      result += [toVarDecl(d)];
   }
 
   return result;
@@ -295,8 +297,8 @@ list[VarDecl] toVarDecls(Tree t) {
 
 VarDecl toVarDecl(Tree t) {
   switch (t) {
-    case appl(_, [name, _, typ]):
-      return varDecl(unparse(name), toType(typ));
+    case appl(prod(label("varDecl", _), _, _), kids):
+      return varDecl(trim(unparse(kids[0])), toType(kids[4]));
   }
 
   throw "No se pudo convertir VarDecl";

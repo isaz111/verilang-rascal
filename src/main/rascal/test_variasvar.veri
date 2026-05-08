@@ -1,0 +1,3 @@
+defmodule A
+defrule (f x y) -> (g y x) end
+end
