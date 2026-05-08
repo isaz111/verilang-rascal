@@ -134,6 +134,12 @@ Term toTerm(Tree t) {
 
     case appl(prod(label("termFloat", _), _, _), kids):
       return realTerm(toReal(trim(unparse(kids[0]))));
+    
+    case appl(prod(label("termString", _), _, _), kids):
+      return stringTerm(trim(unparse(kids[0])));
+
+    case appl(prod(label("termChar", _), _, _), kids):
+      return charTerm(trim(unparse(kids[0])));
 
     case appl(prod(sort("Application"), _, _), kids):
       return appTerm(trim(unparse(kids[2])), toArgs(t));
@@ -151,6 +157,14 @@ Term toTerm(Tree t) {
 
   if (/^[0-9]+\.[0-9]+$/ := txt) {
     return realTerm(toReal(txt));
+  }
+
+  if (/^".*"$/ := txt) {
+  return stringTerm(txt);
+  }
+
+  if (/^'.'$/ := txt) {
+    return charTerm(txt);
   }
 
   throw "No se pudo convertir Term: <txt>";
