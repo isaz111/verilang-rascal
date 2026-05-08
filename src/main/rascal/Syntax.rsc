@@ -1,7 +1,7 @@
 module Syntax
 
-layout Layout = [\ \t\r]*;
-lexical NL = "\n";
+layout Layout = [\ \t]*;
+lexical NL = "\r\n"|"\n";
 
 start syntax Program
   = Module NL*
@@ -19,9 +19,13 @@ syntax UsingList
   ;
 
 syntax ComponentSection
-  = (Component (NL Component)*)?
-    NL?
+  = ComponentLine*
   ;
+
+syntax ComponentLine
+  = Component NL
+  ;
+
 syntax Using
   = 'using' Nombre
   ;

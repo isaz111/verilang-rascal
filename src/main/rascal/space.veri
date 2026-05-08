@@ -1,3 +1,4 @@
 defmodule A
 defspace Persona end
+defspace Estudiante < Persona end
 end
