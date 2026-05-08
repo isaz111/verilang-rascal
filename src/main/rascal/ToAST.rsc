@@ -57,7 +57,7 @@ list[Component] toComponents(Tree t) {
     case appl(prod(label("spaceOrdered", _), _, _), kids):
       result += [spaceComp(orderedSpace(trim(unparse(kids[2])), trim(unparse(kids[4]))))];
     case appl(prod(label("ruleDef", _), _, _), kids):
-      result += [ruleComp(ruleDecl(toTerm(kids[2]), toTerm(kids[4])))];
+      result += [ruleComp(toRule(appl(prod(label("ruleDef", sort("RuleComponent")), [], {}), kids)))];
     case appl(prod(label("varComp", _), _, _), kids):
       result += [variableComp(varBlock(toVarDecls(kids[2])))];
     case appl(prod(label("exprNoAttr", _), _, _), kids):
@@ -119,27 +119,49 @@ SpaceDecl toSpace(Tree t) {
 
 Term toTerm(Tree t) {
   switch (t) {
-    case appl(_, [name]):
-      return nameTerm(unparse(name));
 
-    case appl(_, [intLit]):
-      return intTerm(toInt(unparse(intLit)));
+    case appl(prod(sort("Argument"), _, _), kids):
+      return toTerm(kids[0]);
 
-    case appl(_, [floatLit]):
-      return realTerm(toReal(unparse(floatLit)));
+    case appl(prod(label("termApp", _), _, _), kids):
+      return toTerm(kids[0]);
 
-    case appl(_, [_, name, args]):
-      return appTerm(unparse(name), toArgs(args));
+    case appl(prod(label("termName", _), _, _), kids):
+      return nameTerm(trim(unparse(kids[0])));
+
+    case appl(prod(label("termInt", _), _, _), kids):
+      return intTerm(toInt(trim(unparse(kids[0]))));
+
+    case appl(prod(label("termFloat", _), _, _), kids):
+      return realTerm(toReal(trim(unparse(kids[0]))));
+
+    case appl(prod(sort("Application"), _, _), kids):
+      return appTerm(trim(unparse(kids[2])), toArgs(t));
   }
 
-  throw "No se pudo convertir Term";
+  str txt = trim(unparse(t));
+
+  if (/^[a-zA-Z][a-zA-Z0-9\-]*$/ := txt) {
+    return nameTerm(txt);
+  }
+
+  if (/^[0-9]+$/ := txt) {
+    return intTerm(toInt(txt));
+  }
+
+  if (/^[0-9]+\.[0-9]+$/ := txt) {
+    return realTerm(toReal(txt));
+  }
+
+  throw "No se pudo convertir Term: <txt>";
 }
+
 
 list[Term] toArgs(Tree t) {
   list[Term] result = [];
 
   visit(t) {
-    case a: appl(_, _):
+    case a: appl(prod(sort("Argument"), _, _), _):
       result += [toTerm(a)];
   }
 
@@ -148,8 +170,8 @@ list[Term] toArgs(Tree t) {
 
 RuleDecl toRule(Tree t) {
   switch (t) {
-    case appl(_, [_, left, _, right, _]):
-      return ruleDecl(toTerm(left), toTerm(right));
+    case appl(prod(label("ruleDef", _), _, _), kids):
+      return ruleDecl(toTerm(kids[2]), toTerm(kids[6]));
   }
 
   throw "No se pudo convertir RuleComponent";
@@ -187,42 +209,43 @@ RelOp toRelOp(Tree t) {
 
 LogicExpr toRelation(Tree t) {
   switch (t) {
-    case appl(_, [left, op, right]):
-      return relationExpr(toTerm(left), toRelOp(op), toTerm(right));
+    case appl(prod(label("relEqual", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), equalOp(), toTerm(kids[4]));
+    case appl(prod(label("relLessEq", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), lessEqOp(), toTerm(kids[4]));
+    case appl(prod(label("relGreaterEq", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), greaterEqOp(), toTerm(kids[4]));
+    case appl(prod(label("relNotEqual", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), notEqualOp(), toTerm(kids[4]));
+    case appl(prod(label("relLess", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), lessOp(), toTerm(kids[4]));
+    case appl(prod(label("relGreater", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), greaterOp(), toTerm(kids[4]));
+    case appl(prod(label("relIn", _), _, _), kids):
+      return relationExpr(toTerm(kids[0]), inOp(), toTerm(kids[4]));
   }
-
-  throw "No se pudo convertir Relation";
+  throw "No se pudo convertir Relation: <unparse(t)>";
 }
 
 LogicExpr toLogicExpr(Tree t) {
-  if (isForall(t)) {
-  return toForall(t);
-  }
-  
-  if (isExists(t)) {
-  return toExists(t);
-  }
-  
-  if (isNeg(t)) {
-    return toNeg(t);
-  }
-  
-  if (isAnd(t)) {
-    return toAnd(t);
-    }
+  if (appl(prod(label("forallExpr", _), _, _), _) := t) return toForall(t);
+  if (appl(prod(label("existsExpr", _), _, _), _) := t) return toExists(t);
+  if (appl(prod(label("negExpr", _), _, _), _) := t) return toNeg(t);
+  if (appl(prod(label("andChain", _), _, _), _) := t) return toAnd(t);
+  if (appl(prod(label("orChain", _), _, _), _) := t) return toOr(t);
+  if (appl(prod(label(/^rel/, _), _, _), _) := t) return toRelation(t);
 
-  if (isOr(t)) {
-    return toOr(t);
-    }
-
-  if (contains(unparse(t), "<") || contains(unparse(t), ">") ||
-      contains(unparse(t), "=") || contains(unparse(t), "in")) {
-    return toRelation(t);
+  LogicExpr found = termExpr(nameTerm("?"));
+  visit(t) {
+    case r: appl(prod(label(/^rel/, _), _, _), _):
+      found = toRelation(r);
+    case andNode: appl(prod(label("andChain", _), _, _), _):
+      found = toAnd(andNode);
+    case orNode: appl(prod(label("orChain", _), _, _), _):
+      found = toOr(orNode);
   }
-
-  return termExpr(toTerm(t));
+  return found;
 }
-
 ExprDecl toExpr(Tree t) {
   switch (t) {
     case appl(_, [_, expr, _, _]):
@@ -284,10 +307,8 @@ list[VarDecl] toVarDecls(Tree t) {
   list[VarDecl] result = [];
 
   visit(t) {
-    case d: appl(_, _):
-      if (contains(unparse(d), ":")) {
-        result += [toVarDecl(d)];
-      }
+    case d: appl(prod(label("varDecl", _), _, _), _):
+      result += [toVarDecl(d)];
   }
 
   return result;
@@ -295,57 +316,55 @@ list[VarDecl] toVarDecls(Tree t) {
 
 VarDecl toVarDecl(Tree t) {
   switch (t) {
-    case appl(_, [name, _, typ]):
-      return varDecl(unparse(name), toType(typ));
+    case appl(prod(label("varDecl", _), _, _), kids):
+      return varDecl(trim(unparse(kids[0])), toType(kids[4]));
   }
 
   throw "No se pudo convertir VarDecl";
 }
 
 bool isNeg(Tree t) {
-  return contains(unparse(t), "neg");
+  return appl(prod(label("negExpr", _), _, _), _) := t;
 }
 
 bool isAnd(Tree t) {
-  return contains(unparse(t), " and ");
+  return appl(prod(label("andChain", _), _, _), _) := t;
 }
 
 bool isOr(Tree t) {
-  return contains(unparse(t), " or ");
+  return appl(prod(label("orChain", _), _, _), _) := t;
 }
 
 bool isForall(Tree t) {
-  return contains(unparse(t), "forall");
+  return appl(prod(label("forallExpr", _), _, _), _) := t;
 }
 
 bool isExists(Tree t) {
-  return contains(unparse(t), "exists");
+  return appl(prod(label("existsExpr", _), _, _), _) := t;
 }
 
 LogicExpr toNeg(Tree t) {
   switch (t) {
-    case appl(_, [_, expr]):
-      return negExpr(toLogicExpr(expr));
+    case appl(prod(label("negExpr", _), _, _), kids):
+      return negExpr(toLogicExpr(kids[2]));
   }
-
   throw "No se pudo convertir neg";
 }
 
 LogicExpr toAnd(Tree t) {
   switch (t) {
-    case appl(_, [left, _, right]):
-      return andExpr([toLogicExpr(left), toLogicExpr(right)]);
+    case appl(prod(label("andChain", _), _, _), kids):
+      return andExpr([toLogicExpr(kids[0]), toLogicExpr(kids[4])]);
   }
-
   throw "No se pudo convertir and";
 }
 
+
 LogicExpr toOr(Tree t) {
   switch (t) {
-    case appl(_, [left, _, right]):
-      return orExpr([toLogicExpr(left), toLogicExpr(right)]);
+    case appl(prod(label("orChain", _), _, _), kids):
+      return orExpr([toLogicExpr(kids[0]), toLogicExpr(kids[4])]);
   }
-
   throw "No se pudo convertir or";
 }
 
