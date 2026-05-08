@@ -57,7 +57,7 @@ data SpaceDecl
   ;
 
 data OperDef
-  = operDef(str operName, VType operType, list[AttrItem] operAttrs)
+  = operDef(str operName, VType operType)
   ;
 
 data VarDecl
