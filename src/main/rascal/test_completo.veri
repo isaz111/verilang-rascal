@@ -1,0 +1,10 @@
+defmodule A
+using B
+defspace Persona end
+defspace Estudiante < Persona end
+defoperator f : A -> B -> C end
+defvar x : Int, y : Bool end
+defrule (f x) -> (g x) end
+defexpression x < y end
+defequation x = y end
+end
