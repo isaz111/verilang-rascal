@@ -51,7 +51,7 @@ list[Component] toComponents(Tree t) {
 
   visit(t) {
     case appl(prod(label("opDef", _), _, _), kids):
-      result += [operComp(operDef(trim(unparse(kids[2])), toType(kids[6]), []))];
+      result += [operComp(operDef(trim(unparse(kids[2])), toType(kids[6])))];
     case appl(prod(label("spaceSimple", _), _, _), kids):
       result += [spaceComp(simpleSpace(trim(unparse(kids[2]))))];
     case appl(prod(label("spaceOrdered", _), _, _), kids):
@@ -61,8 +61,6 @@ list[Component] toComponents(Tree t) {
     case appl(prod(label("varComp", _), _, _), kids):
       result += [variableComp(varBlock(toVarDecls(kids[2])))];
     case appl(prod(label("exprNoAttr", _), _, _), kids):
-      result += [exprComp(exprDecl(toLogicExpr(kids[2]), []))];
-    case appl(prod(label("exprAttr", _), _, _), kids):
       result += [exprComp(exprDecl(toLogicExpr(kids[2]), []))];
     case appl(prod(label("equationDef", _), _, _), kids):
       result += [equationComp(equationDecl(toLogicExpr(kids[2]), toLogicExpr(kids[4])))];
@@ -262,7 +260,7 @@ OperDef toOper(Tree t) {
   if (size(partes) >= 2) {
     str nombre = trim(partes[0]);
     str tipo = trim(partes[1]);
-    return operDef(nombre, simpleType(tipo), []);
+    return operDef(nombre, simpleType(tipo));
   }
 
   throw "No se pudo convertir OperatorComponent";
