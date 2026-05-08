@@ -50,6 +50,13 @@ void check(Program p) {
         }
       }
     }
+    for (comp <- comps) {
+      if (spaceComp(orderedSpace(child, parent)) := comp) {
+        if (parent notin spaces) {
+          errors += ["Error: espacio padre \'<parent>\' de \'<child>\' no esta definido"];
+          }
+        }
+      }
 
     if (errors == []) {
       println("OK: no se encontraron errores de tipo");

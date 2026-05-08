@@ -55,7 +55,7 @@ list[Component] toComponents(Tree t) {
     case appl(prod(label("spaceSimple", _), _, _), kids):
       result += [spaceComp(simpleSpace(trim(unparse(kids[2]))))];
     case appl(prod(label("spaceOrdered", _), _, _), kids):
-      result += [spaceComp(orderedSpace(trim(unparse(kids[2])), trim(unparse(kids[4]))))];
+      result += [spaceComp(orderedSpace(trim(unparse(kids[2])), trim(unparse(kids[6]))))];
     case appl(prod(label("ruleDef", _), _, _), kids):
       result += [ruleComp(toRule(appl(prod(label("ruleDef", sort("RuleComponent")), [], {}), kids)))];
     case appl(prod(label("varComp", _), _, _), kids):
