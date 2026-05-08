@@ -7,7 +7,7 @@ import List;
 
 void check(Program p) {
   if (prog(vModule(name, _, comps)) := p) {
-    set[str] spaces = {};
+    set[str] spaces = {"Int", "Bool", "String", "Char", "Real"};
     set[str] vars = {};
     list[str] errors = [];
 
@@ -62,7 +62,7 @@ void check(Program p) {
 list[str] collectTypeNames(VType t) {
   switch(t) {
     case simpleType(name): return [name];
-    case arrowType(simpleType(name), rest): return [name] + collectTypeNames(rest);
+    case arrowType(left, right): return collectTypeNames(left) + collectTypeNames(right);
   }
   return [];
 }

@@ -10,7 +10,8 @@ import AST;
 
 void main() {
   loc file = |project://verilang-rascal/src/main/rascal/test.veri|;
-  Tree t = parse(#start[Program], file);
+  str txt = readFile(file);
+  Tree t = parse(#start[Program], txt, file);
   AST::Program p = toProgram(t);
   runProgram(p);
   println("---");
