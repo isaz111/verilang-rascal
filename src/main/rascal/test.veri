@@ -1,14 +1,13 @@
 defmodule Set
 using List
-defspace Persona end
-defspace Estudiante < Persona end
+defspace Bool end
+defspace Set end
+defspace Element end
+defspace Estudiante < Set end
 defoperator union : Set -> Set -> Set end
 defoperator isIn : Element -> Set -> Bool end
 defvar p : Bool , q : Bool end
-defrule (implication p q) -> (disjunction (negation p) q) end
-defexpression forall x in Persona . x = x end
-defexpression exists y in Persona . y = y end
-defexpression neg (x = y) end
+defvar x : Set , y : Set , z : Set end
+defexpression forall x in Set . x = x end
 defexpression x = y and y = z end
-defequation x = y end
 end
