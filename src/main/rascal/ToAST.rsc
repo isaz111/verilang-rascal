@@ -231,13 +231,14 @@ bool isVariable(Tree t) {
 OperDef toOper(Tree t) {
   switch (t) {
     case appl(_, [_, name, _, typ, _, _]):
-      return operDef(unparse(name), toType(typ), []);
+      return operDef(unparse(name), toType(typ));
 
-    case appl(_, [_, name, _, typ, attrs, _]):
-      return operDef(unparse(name), toType(typ), []);
+    case appl(_, [_, name, _, typ, _]):
+      return operDef(unparse(name), toType(typ));
+
+    default:
+      throw "No se pudo convertir OperatorComponent";
   }
-
-  throw "No se pudo convertir OperatorComponent";
 }
 
 VarBlock toVarBlock(Tree t) {
