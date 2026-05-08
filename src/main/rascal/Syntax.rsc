@@ -48,7 +48,7 @@ syntax SpaceComponent
 //operator
 syntax OperatorComponent
   = opNoAttr: 'defoperator' Nombre ':' Type 'end'
-  | opAttr: 'defoperator' Nombre ':' Type Attribute? 'end'
+  | opAttr: 'defoperator' Nombre ':' Type Attribute 'end'
   ;
 
 syntax Type
