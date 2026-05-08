@@ -6,12 +6,28 @@ import Syntax;
 import String;
 
 Program toProgram(Tree t) {
-  return prog(toModule(t));
+  visit(t) {
+    case m: appl(prod(sort("Module"), _, _), _):
+      return prog(toModule(m));
+  }
+
+  throw "No se encontró Module dentro del Program";
 }
 
 VModule toModule(Tree t) {
-  return vModule(unparse(t), toUsingList(t), toComponents(t));
+  str txt = unparse(t);
+  list[str] lines = split("\n", txt);
+
+  str firstLine = trim(lines[0]);
+  str moduleName = trim(replaceAll(firstLine, "defmodule", ""));
+
+  return vModule(
+    moduleName,
+    toUsingList(t),
+    toComponents(t)
+  );
 }
+
 
 bool isUsing(Tree t) {
   return contains(unparse(t), "using");
