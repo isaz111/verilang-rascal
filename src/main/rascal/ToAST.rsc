@@ -119,6 +119,10 @@ SpaceDecl toSpace(Tree t) {
 
 Term toTerm(Tree t) {
   switch (t) {
+
+    case appl(prod(sort("Argument"), _, _), kids):
+      return toTerm(kids[0]);
+
     case appl(prod(label("termApp", _), _, _), kids):
       return toTerm(kids[0]);
 
@@ -135,7 +139,21 @@ Term toTerm(Tree t) {
       return appTerm(trim(unparse(kids[2])), toArgs(t));
   }
 
-  throw "No se pudo convertir Term: <unparse(t)>";
+  str txt = trim(unparse(t));
+
+  if (/^[a-zA-Z][a-zA-Z0-9\-]*$/ := txt) {
+    return nameTerm(txt);
+  }
+
+  if (/^[0-9]+$/ := txt) {
+    return intTerm(toInt(txt));
+  }
+
+  if (/^[0-9]+\.[0-9]+$/ := txt) {
+    return realTerm(toReal(txt));
+  }
+
+  throw "No se pudo convertir Term: <txt>";
 }
 
 
