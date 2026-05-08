@@ -91,6 +91,8 @@ syntax Argument
   | Nombre
   | IntLiteral
   | FloatLiteral
+  | StringLiteral
+  | CharLiteral
   ;
 
 
