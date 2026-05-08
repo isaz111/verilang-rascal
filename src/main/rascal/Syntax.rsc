@@ -40,16 +40,17 @@ syntax Component
 
 // space
 syntax SpaceComponent
-  = 'defspace' Nombre Less Nombre 'end'
-  | 'defspace' Nombre 'end'
+  = spaceOrdered: 'defspace' Nombre Less Nombre 'end'
+  | spaceSimple: 'defspace' Nombre 'end'
   ;
 
 
 //operator
-syntax OperatorComponent
-  = opNoAttr: 'defoperator' Nombre ':' Type 'end'
-  | opAttr: 'defoperator' Nombre ':' Type Attribute 'end'
+syntax OperatorComponent 
+  = opDef: 'defoperator' Nombre ':' Type 'end'
   ;
+
+
 
 syntax Type
   = simpleType: Nombre
@@ -72,7 +73,7 @@ syntax VarDecl
 
 // reglas
 syntax RuleComponent
-  = 'defrule' Term Arrow Term 'end'
+  = ruleDef: 'defrule' Term Arrow Term 'end'
   ;
 
 
@@ -92,13 +93,11 @@ syntax Argument
 // expresiones
 syntax ExpressionComponent
   = exprNoAttr: 'defexpression' LogicalExpression 'end'
-  | exprAttr: 'defexpression' LogicalExpression Attribute 'end'
   ;
 
 syntax EquationComponent
-  = 'defequation' LogicalExpression Equal LogicalExpression 'end'
+  = equationDef: 'defequation' LogicalExpression Equal LogicalExpression 'end'
   ;
-
 
 //attributes
 syntax Attribute
