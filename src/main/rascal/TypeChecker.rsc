@@ -5,80 +5,134 @@ import IO;
 import Set;
 import List;
 
-void check(Program p) {
-  if (prog(vModule(name, _, comps)) := p) {
+list[str] checkProgram(Program p) {
+  list[str] errors = [];
+
+  if (prog(vModule(_, _, comps)) := p) {
     set[str] spaces = {"Int", "Bool", "String", "Char", "Real"};
     set[str] vars = {};
-    list[str] errors = [];
+    set[str] operators = {};
 
     for (comp <- comps) {
-      if (spaceComp(simpleSpace(n)) := comp) spaces += {n};
-      if (spaceComp(orderedSpace(child, _)) := comp) spaces += {child};
-    }
-
-    for (comp <- comps) {
-      if (variableComp(varBlock(decls)) := comp) {
-        for (varDecl(n, _) <- decls) vars += {n};
+      if (spaceComp(simpleSpace(n)) := comp) {
+        spaces += {n};
       }
-    }
-
-    for (comp <- comps) {
-      if (operComp(operDef(name, typ)) := comp) {
-        for (str t <- collectTypeNames(typ)) {
-          if (t notin spaces) {
-            errors += ["Error: tipo \'<t>\' en operador \'<name>\' no esta definido como espacio"];
-          }
+      else if (spaceComp(orderedSpace(child, _)) := comp) {
+        spaces += {child};
+      }
+      else if (variableComp(varBlock(decls)) := comp) {
+        for (varDecl(vname, _) <- decls) {
+          vars += {vname};
         }
       }
-      if (variableComp(varBlock(decls)) := comp) {
-        for (varDecl(vname, typ) <- decls) {
-          for (str t <- collectTypeNames(typ)) {
-            if (t notin spaces) {
-              errors += ["Error: tipo \'<t>\' en variable \'<vname>\' no esta definido como espacio"];
-            }
-          }
+      else if (operComp(operDef(opName, _)) := comp) {
+        operators += {opName};
+      }
+    }
+
+    for (comp <- comps) {
+      if (spaceComp(orderedSpace(child, parent)) := comp) {
+        if (parent notin spaces) {
+          errors += [
+            "Error de tipos: el espacio padre " + parent + " de " + child + " no esta definido."
+          ];
         }
       }
     }
 
     for (comp <- comps) {
       if (exprComp(exprDecl(expr, _)) := comp) {
-        for (str v <- collectVarNames(expr)) {
-          if (v notin vars && v notin spaces) {
-            errors += ["Error: variable \'<v>\' en expresion no esta declarada"];
-          }
-        }
+        errors += checkLogicExpr(expr, spaces, vars, operators);
+      }
+      else if (equationComp(equationDecl(left, right)) := comp) {
+        errors += checkLogicExpr(left, spaces, vars, operators);
+        errors += checkLogicExpr(right, spaces, vars, operators);
       }
     }
-    for (comp <- comps) {
-      if (spaceComp(orderedSpace(child, parent)) := comp) {
-        if (parent notin spaces) {
-          errors += ["Error: espacio padre \'<parent>\' de \'<child>\' no esta definido"];
-          }
-        }
-      }
 
-    if (errors == []) {
-      println("OK: no se encontraron errores de tipo");
-    } else {
-      for (e <- errors) println(e);
+    return errors;
+  }
+
+  return ["Error de tipos: estructura de programa no reconocida."];
+}
+
+list[str] checkLogicExpr(LogicExpr expr, set[str] spaces, set[str] vars, set[str] operators) {
+  list[str] errors = [];
+
+  set[str] boundVars = collectBoundVars(expr);
+  set[str] domains = collectDomains(expr);
+  set[str] names = collectNames(expr);
+
+  for (domain <- domains) {
+    if (domain notin spaces) {
+      errors += [
+        "Error de tipos: el dominio " + domain + " usado en un cuantificador no esta definido como espacio."
+      ];
     }
   }
-}
 
-list[str] collectTypeNames(VType t) {
-  switch(t) {
-    case simpleType(name): return [name];
-    case arrowType(left, right): return collectTypeNames(left) + collectTypeNames(right);
+  set[str] allowedNames = spaces + vars + operators + boundVars;
+
+  for (name <- names) {
+    if (name != "?" && name notin allowedNames) {
+      errors += [
+        "Error de tipos: el nombre " + name + " usado en una expresion no esta declarado."
+      ];
+    }
   }
-  return [];
+
+  return errors;
 }
 
-set[str] collectVarNames(LogicExpr e) {
+set[str] collectNames(LogicExpr expr) {
   set[str] result = {};
-  visit(e) {
-    case termExpr(nameTerm(n)): result += {n};
-    case relationExpr(nameTerm(l), _, nameTerm(r)): { result += {l}; result += {r}; }
+
+  visit(expr) {
+    case nameTerm(n): {
+      result += {n};
+    }
   }
+
   return result;
+}
+
+set[str] collectBoundVars(LogicExpr expr) {
+  set[str] result = {};
+
+  visit(expr) {
+    case forallExpr(v, _, _): {
+      result += {v};
+    }
+
+    case existsExpr(v, _, _): {
+      result += {v};
+    }
+  }
+
+  return result;
+}
+
+set[str] collectDomains(LogicExpr expr) {
+  set[str] result = {};
+
+  visit(expr) {
+    case inSpace(spaceName): {
+      result += {spaceName};
+    }
+  }
+
+  return result;
+}
+
+void check(Program p) {
+  list[str] errors = checkProgram(p);
+
+  if (errors == []) {
+    println("OK: no se encontraron errores de tipo");
+  }
+  else {
+    for (e <- errors) {
+      println(e);
+    }
+  }
 }

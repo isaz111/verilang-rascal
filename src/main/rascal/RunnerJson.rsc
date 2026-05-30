@@ -6,6 +6,7 @@ import Syntax;
 import AST;
 import ToAST;
 import Generator;
+import TypeChecker;
 import String;
 import List;
 
@@ -238,28 +239,46 @@ void main(list[str] args) {
 
   str codigo = generateProgram(ast);
 
+  list[str] typeErrors = checkProgram(ast);
+  bool typeOk = typeErrors == [];
+  bool semanticOk = typeOk;
+
+  str typeStatus = "FAIL";
+  if (typeOk) {
+    typeStatus = "OK";
+  }
+
   str modulesTxt = intercalate(", ", modules);
 
   list[str] output = [
     "Parser OK",
+    "Type checker: <typeStatus>",
     "Modulo principal: <modName>",
     "Modulos encontrados: <modulesTxt>",
     "Usings encontrados: <size(usings)>",
     "Cantidad de componentes: <n>"
   ] + describeComponents(ast);
 
-  str resumen =
-    "El archivo VeriLang fue procesado correctamente. "
-    + "Se encontro el modulo <modName> con <n> componente(s).";
+  str resumen;
+
+  if (typeOk) {
+    resumen =
+      "El archivo VeriLang fue procesado correctamente. "
+      + "Se encontro el modulo <modName> con <n> componente(s), sin errores de tipos.";
+  } else {
+    resumen =
+      "El archivo VeriLang fue parseado correctamente, "
+      + "pero se encontraron errores de tipos en el modulo <modName>.";
+  }
 
   println(jsonResult(
-    true,
+    typeOk,
     modName,
     modules,
     true,
-    true,
-    true,
-    [],
+    typeOk,
+    semanticOk,
+    typeErrors,
     [],
     output,
     "",
