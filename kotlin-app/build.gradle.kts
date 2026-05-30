@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.9.22"
@@ -6,8 +7,7 @@ plugins {
     kotlin("plugin.serialization") version "1.9.22"
 }
 
-// TODO: cambia "milang" por el nombre de tu lenguaje (en minúsculas, sin espacios)
-group = "milang"
+group = "verilang"
 version = "1.0.0"
 
 repositories {
@@ -24,14 +24,24 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.8.0")
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    sourceCompatibility = "21"
+    targetCompatibility = "21"
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions {
+        jvmTarget = "21"
+    }
+}
+
 compose.desktop {
     application {
-        // TODO: si renombraste el paquete, actualiza aquí también (ej. "milang.MainKt")
         mainClass = "milang.MainKt"
+
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            // TODO: cambia el packageName por el nombre de tu lenguaje
-            packageName = "MiLang"
+            packageName = "VeriLang"
             packageVersion = "1.0.0"
         }
     }

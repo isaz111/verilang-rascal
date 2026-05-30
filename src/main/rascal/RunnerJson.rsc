@@ -49,9 +49,29 @@ void main(list[str] args) {
   str src;
 
   try {
-    loc file = isEmpty(args)
-      ? |project://verilang-rascal/src/main/rascal/test_operator.veri|
-      : (startsWith(args[0], "/") ? |file:///| + args[0] : |cwd:///| + args[0]);
+    loc file;
+
+    if (isEmpty(args)) {
+      file = |project://verilang-rascal/src/main/rascal/test_operator.veri|;
+    } else {
+      str path = args[0];
+
+      // Windows usa \, pero Rascal trabaja mejor con /
+      path = replaceAll(path, "\\", "/");
+
+      // Caso Windows: C:/...
+      if (/^[A-Za-z]:\/.*/ := path) {
+        file = |file:///| + path;
+      }
+      // Caso Linux/Mac: /home/...
+      else if (startsWith(path, "/")) {
+        file = |file://| + path;
+      }
+      // Caso ruta relativa
+      else {
+        file = |cwd:///| + path;
+      }
+    }
 
     src = readFile(file);
   }

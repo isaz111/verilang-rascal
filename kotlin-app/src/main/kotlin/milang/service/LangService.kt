@@ -81,16 +81,14 @@ class LangService {
         val cmd = listOf(
             "java",
             "-Dfile.encoding=UTF-8",
-            "-Drascal.projectPath=${srcDir.absolutePath}",
+            "-Drascal.projectPath=${projectRoot.absolutePath}",
             "-jar", rascalJar.absolutePath,
-            // TODO: cambia "milang::RunnerJson" por el módulo Rascal de tu lenguaje
-            // El formato es "nombrePaquete::NombreModulo" (ej. "miprog::RunnerJson")
             "RunnerJson",
             filePath
         )
 
         val process = ProcessBuilder(cmd)
-            .directory(srcDir)
+            .directory(projectRoot)
             .redirectErrorStream(false)
             .start()
         process.outputStream.close()

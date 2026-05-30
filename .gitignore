@@ -1,3 +1,20 @@
 target/
 .vscode/
 *.class
+
+# Gradle
+.gradle/
+**/.gradle/
+build/
+**/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+src/main/rascal/BASES DE DATOS/
