@@ -1,4 +1,3 @@
-// TODO: si renombraste el paquete, cambia "milang" por el nombre de tu lenguaje
 package milang.ui
 
 import androidx.compose.foundation.background
@@ -24,55 +23,82 @@ import javax.swing.filechooser.FileNameExtensionFilter
 @Composable
 fun MainWindow() {
     val service = remember { LangService() }
-    val scope   = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     var filePath by remember { mutableStateOf("") }
-    var result   by remember { mutableStateOf<RunResult?>(null) }
-    var running  by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<RunResult?>(null) }
+    var running by remember { mutableStateOf(false) }
 
-    // Colores del tema oscuro (puedes cambiarlos a gusto)
-    val green   = Color(0xFF2E7D32)
-    val red     = Color(0xFFC62828)
-    val yellow  = Color(0xFFF57F17)
-    val bg      = Color(0xFF1E1E1E)
+    val bg = Color(0xFF1E1E1E)
     val surface = Color(0xFF2D2D2D)
-    val text    = Color(0xFFEEEEEE)
+    val surfaceLight = Color(0xFF363C42)
+    val text = Color(0xFFEEEEEE)
+    val muted = Color(0xFFAAAAAA)
+
+    val green = Color(0xFF2E7D32)
+    val red = Color(0xFFC62828)
+    val yellow = Color(0xFFF57F17)
+    val blue = Color(0xFF90CAF9)
 
     Column(
-        modifier = Modifier.fillMaxSize().background(bg).padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(bg)
+            .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // TODO: cambia el título por el nombre de tu lenguaje
-        Text("Verilang — Runner", color = text, fontSize = 22.sp)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = "VeriLang — Runner",
+                color = text,
+                fontSize = 28.sp
+            )
 
-        // Fila superior: campo de ruta, botón de seleccionar archivo, botón de correr
+            Text(
+                text = "Analizador de archivos .veri usando Rascal y Kotlin",
+                color = muted,
+                fontSize = 14.sp
+            )
+        }
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
                 value = filePath,
                 onValueChange = { filePath = it },
-                // TODO: actualiza la etiqueta con la extensión de tu lenguaje (ej. "archivo .ml")
-                label = { Text("Ruta del archivo fuente", color = Color.Gray) },
+                label = { Text("Ruta del archivo fuente") },
                 modifier = Modifier.weight(1f),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = text, unfocusedTextColor = text,
-                    focusedBorderColor = Color(0xFF90CAF9), unfocusedBorderColor = Color.Gray
+                    focusedTextColor = text,
+                    unfocusedTextColor = text,
+                    focusedBorderColor = blue,
+                    unfocusedBorderColor = Color.Gray,
+                    focusedLabelColor = blue,
+                    unfocusedLabelColor = Color.Gray
                 ),
-                textStyle = LocalTextStyle.current.copy(fontFamily = FontFamily.Monospace)
+                textStyle = LocalTextStyle.current.copy(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 14.sp
+                )
             )
 
             Button(
                 onClick = {
                     val chooser = JFileChooser().apply {
-                        // TODO: cambia "ml" y la descripción por la extensión de tu lenguaje
-                        fileFilter = FileNameExtensionFilter("Archivos de Mi Lenguaje (*.veri)", "veri")
-                        currentDirectory = File(System.getProperty("user.home"))
+                        fileFilter = FileNameExtensionFilter(
+                            "Archivos VeriLang (*.veri, *.vl)",
+                            "veri",
+                            "vl"
+                        )
+                        currentDirectory = File(System.getProperty("user.dir"))
                     }
-                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
+
+                    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
                         filePath = chooser.selectedFile.absolutePath
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF455A64))
             ) {
@@ -83,99 +109,168 @@ fun MainWindow() {
                 onClick = {
                     scope.launch {
                         running = true
-                        result  = service.run(filePath.trim())
+                        result = service.run(filePath.trim())
                         running = false
                     }
                 },
                 enabled = filePath.isNotBlank() && !running,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
             ) {
-                if (running)
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), color = text, strokeWidth = 2.dp)
-                else
+                if (running) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = text,
+                        strokeWidth = 2.dp
+                    )
+                } else {
                     Text("Correr")
+                }
             }
         }
 
-        // panel de resultados, aparece solo despueus de ejecutar
         result?.let { r ->
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(surface, RoundedCornerShape(8.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .weight(1f)
+                    .background(surface, RoundedCornerShape(12.dp))
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // statements de estado Parse / TypeCheck / semantica
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    StatusChip("Parse",     r.parseOk,     green, red)
-                    StatusChip("Types",     r.typeCheckOk, green, yellow)
-                    StatusChip("Semántica", r.semanticOk,  green, red)
-                    if (r.module.isNotBlank())
-                        Text("módulo: ${r.module}", color = Color(0xFF90CAF9), fontFamily = FontFamily.Monospace)
+                Text(
+                    text = "Resultado del análisis",
+                    color = text,
+                    fontSize = 18.sp
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    StatusChip("Parser", r.parseOk, green, red)
+                    StatusChip("Tipos", r.typeCheckOk, green, yellow)
+                    StatusChip("Semántica", r.semanticOk, green, yellow)
                 }
 
-                // resumen del AST 
+                val modulesToShow =
+                    if (r.modules.isNotEmpty()) r.modules
+                    else if (r.module.isNotBlank()) listOf(r.module)
+                    else emptyList()
+
+                if (modulesToShow.isNotEmpty()) {
+                    SectionBox(
+                        title = "Módulos encontrados",
+                        content = modulesToShow.joinToString("\n") { "• $it" },
+                        color = blue,
+                        background = surfaceLight
+                    )
+                }
+
                 if (r.resumen.isNotBlank()) {
-                    Text(r.resumen, color = Color(0xFF9E9E9E), fontFamily = FontFamily.Monospace, fontSize = 12.sp)
+                    SectionBox(
+                        title = "Resumen",
+                        content = r.resumen,
+                        color = muted,
+                        background = surfaceLight
+                    )
                 }
 
-                // error general 
                 if (r.error.isNotBlank()) {
-                    SectionBox("Error", r.error, red)
+                    SectionBox(
+                        title = "Error",
+                        content = r.error,
+                        color = red,
+                        background = Color(0xFF3A2B2B)
+                    )
                 }
 
-                // errores de tipos
                 if (r.typeErrors.isNotEmpty()) {
-                    SectionBox("Errores de tipos", r.typeErrors.joinToString("\n"), yellow)
+                    SectionBox(
+                        title = "Errores de tipos",
+                        content = r.typeErrors.joinToString("\n"),
+                        color = yellow,
+                        background = Color(0xFF3A3324)
+                    )
                 }
 
-                // errores semanticos
                 if (r.semanticErrors.isNotEmpty()) {
-                    SectionBox("Errores semánticos", r.semanticErrors.joinToString("\n"), yellow)
+                    SectionBox(
+                        title = "Errores semánticos",
+                        content = r.semanticErrors.joinToString("\n"),
+                        color = yellow,
+                        background = Color(0xFF3A3324)
+                    )
                 }
 
-                // pretty printer
                 if (r.codigoFormateado.isNotBlank()) {
-                    SectionBox("Código formateado", r.codigoFormateado, Color(0xFF90CAF9))
+                    SectionBox(
+                        title = "Resultado generado desde el AST",
+                        content = r.codigoFormateado,
+                        color = blue,
+                        background = surfaceLight
+                    )
                 }
 
-                // salida del programa
                 if (r.output.isNotEmpty()) {
-                    SectionBox("Output", r.output.joinToString("\n"), green)
+                    SectionBox(
+                        title = "Salida",
+                        content = r.output.joinToString("\n"),
+                        color = green,
+                        background = Color(0xFF26352A)
+                    )
                 }
             }
         }
     }
 }
 
-// Chip de estado coloreado (OK / FAIL)
 @Composable
-private fun StatusChip(label: String, ok: Boolean, okColor: Color, failColor: Color) {
+private fun StatusChip(
+    label: String,
+    ok: Boolean,
+    okColor: Color,
+    failColor: Color
+) {
     val color = if (ok) okColor else failColor
+    val status = if (ok) "OK" else "FAIL"
+
     Box(
         modifier = Modifier
-            .background(color.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .background(color.copy(alpha = 0.22f), RoundedCornerShape(6.dp))
+            .padding(horizontal = 14.dp, vertical = 7.dp)
     ) {
-        Text("$label: ${if (ok) "OK" else "FAIL"}", color = color, fontSize = 12.sp)
+        Text(
+            text = "$label: $status",
+            color = color,
+            fontSize = 13.sp
+        )
     }
 }
 
-// Caja con título y contenido scrolleable
 @Composable
-private fun SectionBox(title: String, content: String, color: Color) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, color = color, fontSize = 13.sp)
+private fun SectionBox(
+    title: String,
+    content: String,
+    color: Color,
+    background: Color
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = title,
+            color = color,
+            fontSize = 14.sp
+        )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(color.copy(alpha = 0.07f), RoundedCornerShape(4.dp))
-                .padding(10.dp)
-                .heightIn(max = 200.dp)
-                .verticalScroll(rememberScrollState())
+                .background(background, RoundedCornerShape(8.dp))
+                .padding(12.dp)
         ) {
-            Text(content, color = Color(0xFFEEEEEE), fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+            Text(
+                text = content,
+                color = Color(0xFFEEEEEE),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 13.sp
+            )
         }
     }
 }
