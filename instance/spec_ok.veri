@@ -1,0 +1,12 @@
+﻿defmodule Set
+using List
+defspace Element end
+defspace Set end
+defspace Nat end
+defoperator union : Set -> Set -> Set end
+defoperator isIn : Element -> Set -> Bool end
+defvar x : Element, y : Element, s : Set end
+defrule (union s s) -> s end
+defexpression forall x in Element . x = x end
+defequation x = y end
+end
